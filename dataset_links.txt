@@ -1,0 +1,11 @@
+MNIST - http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+      - http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+      - http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+      - http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+
+Reuters - https://s3.amazonaws.com/text-datasets/reuters.npz 
+	- https://s3.amazonaws.com/text-datasets/reuters_word_index.json
+
+Wisconsin Breast Cancer - https://www.kaggle.com/uciml/breast-cancer-wisconsin-data/downloads/breast-cancer-wisconsin-data.zip/2
+
+RadioML2016.10b: http://opendata.deepsig.io/datasets/2016.10/RML2016.10b.tar.bz2
