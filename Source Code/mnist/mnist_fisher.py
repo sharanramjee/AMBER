@@ -1,18 +1,36 @@
 from __future__ import print_function
-import math
 import keras
+import os,random
+import matplotlib
 import numpy as np
 import pandas as pd
+matplotlib.use('Agg')
+import tensorflow as tf
+from keras import layers
+from copy import deepcopy
+import keras.models as models
 from keras import backend as K
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
-from keras.optimizers import RMSprop
+from keras.utils import np_utils
+from keras.regularizers import *
+import cPickle, random, sys, keras
+from keras.utils import multi_gpu_model
+from keras.callbacks import EarlyStopping
+os.environ["KERAS_BACKEND"] = "tensorflow"
+K.tensorflow_backend._get_available_gpus()
+from keras.layers.noise import AlphaDropout
 from keras.preprocessing.text import Tokenizer
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
+from keras.optimizers import adam, adagrad, RMSprop
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential, load_model, Model
-from skfeature.function.similarity_based import fisher_score
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from skfeature.function.information_theoretical_based import CMIM
+from keras.layers.core import Reshape,Dense,Dropout,Activation,Flatten
+from skfeature.function.similarity_based.fisher_score import fisher_score
+from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from skfeature.function.similarity_based.fisher_score import feature_ranking
+from skfeature.function.statistical_based.chi_square import chi_square as RFS
 from keras.layers import Dense, Dropout, Activation, Input, Flatten, Conv2D, MaxPooling2D
 
 # final model parameters
@@ -29,8 +47,8 @@ x_train = x_train.reshape(x_train.shape[0], 784)
 x_test = x_test.reshape(x_test.shape[0], 784)
 
 # compute fisher scores
-score = fisher_score.fisher_score(x_train, y_train)
-idx = fisher_score.feature_ranking(score)
+score = fisher_score(x_train, y_train)
+idx = feature_ranking(score)
 np.save('features/fisher.npy', idx)
 print('Features saved')
 #idx = np.load('features/fisher.npy', idx)

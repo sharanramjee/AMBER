@@ -23,11 +23,14 @@ K.tensorflow_backend._get_available_gpus()
 from keras.optimizers import adam, adagrad
 from keras.layers.noise import AlphaDropout
 from keras.models import Sequential, load_model, Model
+from skfeature.function.sparse_learning_based import RFS
+from skfeature.function.similarity_based import fisher_score
+from skfeature.function.statistical_based import chi_square as RFS
 from keras.layers.core import Reshape,Dense,Dropout,Activation,Flatten
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from skfeature.function.statistical_based import chi_square as fisher_score
+from skfeature.utility.sparse_learning import construct_label_matrix, feature_ranking
 from keras.layers import Dense, Dropout, Activation, Input, Flatten, Conv2D, MaxPooling2D
-
-model_path = 'models/amber_test.h5'
 
 # In[2]:
 # Dataset setup
@@ -48,38 +51,6 @@ def to_onehot(yy):
     yy1[np.arange(len(yy)),yy] = 1
     return yy1
 Y_snr = to_onehot(map(lambda x: mods.index(lbl[x][0]), range(X.shape[0])))
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-'''num_samples = 120
-snr_divs = 6000
-new_X = []
-orig_model = load_model('cldnn_models/model_cldnn_original.h5')
-for eva_iter in range(X.shape[0]//snr_divs):
-    snr_data = X[eva_iter*snr_divs:(eva_iter+1)*snr_divs]
-    snr_out = Y_snr[eva_iter*snr_divs:(eva_iter+1)*snr_divs]
-    snr_acc_list = []
-    snr_data_copy = deepcopy(snr_data)
-    for idx in range(X.shape[2]):
-        snr_data = deepcopy(snr_data_copy)
-        snr_data = snr_data.transpose((2,1,0))
-    	new_snr_data = np.append(snr_data[:idx], np.zeros((1, snr_data.shape[1], snr_data.shape[2])), axis=0)
-    	snr_data = np.append(new_snr_data, snr_data[idx+1:], axis=0)
-        snr_data = snr_data.transpose((2,1,0))
-        score = orig_model.evaluate(snr_data, snr_out, batch_size=snr_divs, verbose=0)
-        snr_acc_list.append((idx, score[1]))
-    snr_acc_list.sort(key=lambda x: x[1])
-    snr_acc_list = snr_acc_list[:num_samples]
-    snr_acc_list.sort(key=lambda x: x[0]) 
-    snr_idxs = [ele[0] for ele in snr_acc_list]
-    snr_data = snr_data.transpose((2,1,0))
-    snr_data = snr_data[snr_idxs]
-    snr_data = snr_data.transpose((2,1,0))
-    new_X = new_X + [snr_data]
-    print(eva_iter)
-X = np.vstack(new_X)
-np.save('features/ddfs_' + str(num_samples) + ').npy', X)'''
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#X = np.load('resnet_models/evs_samples_1_32.npy')
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # In[3]:
 # Partition the dataset into training and testing datasets
@@ -258,7 +229,7 @@ for img_rows in range(127, 0, -1):
 	# Show simple version of performance
 	score = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=0)
 	print(score)
-'''
+
 	# In[12]:
 	# Print acciracies for each snr
 	acc = {}
@@ -285,8 +256,8 @@ for img_rows in range(127, 0, -1):
 	print cor*100 / (cor+ncor)
 	acc[snr] = 1.0*cor/(cor+ncor)
 	if snr == 18:
-		acc_list(cor*100 / (cor+ncor))
-'''
+		acc_list.append(cor*100 / (cor+ncor))
+
 # print final model accuracies for each feature count
 for acc_value in acc_list:
 	print(acc_value)

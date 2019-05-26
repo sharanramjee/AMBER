@@ -1,16 +1,39 @@
-# coding: utf-8
+from __future__ import print_function
 import keras
+import os,random
+import matplotlib
 import numpy as np
 import pandas as pd
-from keras.layers import Dense
+matplotlib.use('Agg')
+import tensorflow as tf
+from keras import layers
+from copy import deepcopy
+import keras.models as models
+from keras import backend as K
 import matplotlib.pyplot as plt
-from keras.models import Sequential
+from keras.datasets import reuters
+from keras.utils import np_utils
+from keras.regularizers import *
+import cPickle, random, sys, keras
+from keras.utils import multi_gpu_model
+from keras.callbacks import EarlyStopping
+os.environ["KERAS_BACKEND"] = "tensorflow"
+K.tensorflow_backend._get_available_gpus()
+from keras.layers.noise import AlphaDropout
 from sklearn.metrics import confusion_matrix
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
+from keras.preprocessing.text import Tokenizer
+from keras.optimizers import adam, adagrad, RMSprop
 from sklearn.model_selection import train_test_split
-from skfeature.function.statistical_based import chi_square as RFS
-from skfeature.utility.sparse_learning import construct_label_matrix, feature_ranking
+from keras.models import Sequential, load_model, Model
+from skfeature.function.sparse_learning_based import RFS
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from keras.layers.core import Reshape,Dense,Dropout,Activation,Flatten
+from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from skfeature.function.statistical_based.chi_square import feature_ranking
+from skfeature.function.statistical_based.chi_square import chi_square as RFS
+from skfeature.function.information_theoretical_based.CMIM import cmim as cmim
+from skfeature.function.similarity_based.fisher_score import fisher_score as fisher_score
+from keras.layers import Dense, Dropout, Activation, Input, Flatten, Conv2D, MaxPooling2D
 
 # load wisconsin breast cancer dataset
 dataset = pd.read_csv('data_cancer.csv')
@@ -25,8 +48,8 @@ X_train = X_train.values
 X_test = X_test.values
 
 # compute RFS scores
-score = RFS.chi_square(X_train, y_train)
-idx = RFS.feature_ranking(score)
+score = RFS(X_train, y_train)
+idx = feature_ranking(score)
 np.save('features/rfs.npy', idx)
 print('Features saved')
 #idx = np.load('features/rfs.npy')

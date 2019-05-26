@@ -23,8 +23,13 @@ K.tensorflow_backend._get_available_gpus()
 from keras.optimizers import adam, adagrad
 from keras.layers.noise import AlphaDropout
 from keras.models import Sequential, load_model, Model
+from skfeature.function.sparse_learning_based import RFS
+from skfeature.function.similarity_based import fisher_score
+from skfeature.function.statistical_based import chi_square as RFS
 from keras.layers.core import Reshape,Dense,Dropout,Activation,Flatten
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from skfeature.function.statistical_based import chi_square as fisher_score
+from skfeature.utility.sparse_learning import construct_label_matrix, feature_ranking
 from keras.layers import Dense, Dropout, Activation, Input, Flatten, Conv2D, MaxPooling2D
 
 # In[2]:
@@ -58,11 +63,6 @@ x_train = X[train_idx]
 x_test =  X[test_idx]
 y_train = to_onehot(map(lambda x: mods.index(lbl[x][0]), train_idx))
 y_test = to_onehot(map(lambda x: mods.index(lbl[x][0]), test_idx))
-
-x_train = x_train[:100]
-y_train = y_train[:100]
-x_test = x_test[:100]
-y_test = y_test[:100]
 
 # In[4]:
 in_shp = list(x_train.shape[1:])
@@ -174,7 +174,7 @@ for img_rows in range(127, 0, -1):
 	# Show simple version of performance
 	score = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=0)
 	print(score)
-'''
+
 	# In[12]:
 	# Print acciracies for each snr
 	acc = {}
@@ -201,8 +201,8 @@ for img_rows in range(127, 0, -1):
 	print cor*100 / (cor+ncor)
 	acc[snr] = 1.0*cor/(cor+ncor)
 	if snr == 18:
-		acc_list(cor*100 / (cor+ncor))
-'''
+		acc_list.append(cor*100 / (cor+ncor))
+
 # print final model accuracies for each feature count
 for acc_value in acc_list:
 	print(acc_value)
