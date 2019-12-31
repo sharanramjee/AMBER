@@ -1,0 +1,28 @@
+Model Hyperparameters:
+ - The Ranker Models hyperparameters were chosen in accordance to those of the state-of-the-art models for each dataset
+ - All the Ranker Model files can be found in the Ranker Models directory
+ - All the Final Model code can be found under the #Final Model comment AMBER Python files under the respective dataset directories in the Source Code directory
+
+MNIST:
+ - Ranker Model:
+ 	- File in Ranker Models/mnist_ranker.py
+ - Final Model:
+	- Code in Source Code/mnist/mnist_amber.py
+
+Reuters:
+ - Ranker Model:
+ 	- File in Ranker Models/reuters_ranker.py
+ - Final Model:
+	- Code in Source Code/reuters/reuters_amber.py
+
+Cancer:
+ - Ranker Model:
+ 	- File in Ranker Models/cancer_ranker.py
+ - Final Model:
+	- Code in Source Code/cancer/cancer_amber.py
+
+RadioML:
+- Ranker Model:
+ 	- File in Ranker Models/radioml_ranker.py
+- Final Model:
+	- Code in Source Code/radioml/radioml_amber.py
