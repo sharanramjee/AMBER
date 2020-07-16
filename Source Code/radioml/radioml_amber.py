@@ -34,8 +34,8 @@ from keras.layers import Dense, Dropout, Activation, Input, Flatten, Conv2D, Max
 
 # In[2]:
 # Dataset setup
-Xd = cPickle.load(open("data/RML2016.10b_dict.dat",'rb'))
-snrs,mods = map(lambda j: sorted(list(set(map(lambda x: x[j], Xd.keys())))), [1,0])
+Xd = cPickle.load(open("data/RML2016.10b_dict.dat", 'rb'))
+snrs, mods = map(lambda j: sorted(list(set(map(lambda x: x[j], Xd.keys())))), [1, 0])
 X = []
 Y_snr = []
 lbl = []
@@ -46,10 +46,14 @@ for mod in mods:
     Y_snr = Y_snr + [mod]*120000
 X = np.vstack(X)
 Y_snr = np.vstack(Y_snr)
+
+
 def to_onehot(yy):
     yy1 = np.zeros([len(yy), max(yy)+1])
     yy1[np.arange(len(yy)),yy] = 1
     return yy1
+
+
 Y_snr = to_onehot(map(lambda x: mods.index(lbl[x][0]), range(X.shape[0])))
 
 # In[3]:
@@ -60,7 +64,7 @@ n_train = n_examples // 2
 train_idx = np.random.choice(range(0,n_examples), size=n_train, replace=False)
 test_idx = list(set(range(0,n_examples))-set(train_idx))
 x_train = X[train_idx]
-x_test =  X[test_idx]
+x_test = X[test_idx]
 y_train = to_onehot(map(lambda x: mods.index(lbl[x][0]), train_idx))
 y_test = to_onehot(map(lambda x: mods.index(lbl[x][0]), test_idx))
 
@@ -79,11 +83,13 @@ y_test_orig = y_test
 ranker_model = load_model('models/model_cldnn_original.h5')
 
 # perform AMBER
+R3_value = 1
 x_train_final = x_train
 x_test_final = x_test
 feat_idx_list = []
 final_acc_list = []
 acc_list = []
+
 for img_rows in range(127, 0, -1):
 	num_fea = img_rows
 	x_train = x_train_orig
@@ -92,10 +98,10 @@ for img_rows in range(127, 0, -1):
 		if feat_idx in feat_idx_list:
 			continue
 		x_train = x_train_orig
-        	x_train = x_train.transpose((2,1,0))
-    		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1], x_train.shape[2]), np.mean(x_train[feat_idx])), axis=0)
-    		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
-        	x_train = x_train.transpose((2,1,0))
+		x_train = x_train.transpose((2,1,0))
+		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1], x_train.shape[2]), np.mean(x_train[feat_idx])), axis=0)
+		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
+		x_train = x_train.transpose((2,1,0))
 		disc_score = ranker_model.evaluate(x_train, y_train, batch_size=n_train,verbose=0)
 		idx_acc_list.append((feat_idx, disc_score[0]))
 		print(feat_idx)
@@ -114,25 +120,25 @@ for img_rows in range(127, 0, -1):
 	x_test = x_test[remain_idx]
 	x_train = x_train.transpose()
 	x_test = x_test.transpose()
-	input_dim = Input(shape = ((img_rows+1)*2, ))
-        encoding_dim = img_rows*2
-	encoded = Dense(encoding_dim, activation = 'relu')(input_dim)
-	decoded = Dense((img_rows+1)*2, activation = 'sigmoid')(encoded)
-	autoencoder = Model(input = input_dim, output = decoded)
-	autoencoder.compile(optimizer = 'adadelta', loss = 'binary_crossentropy')
-	x_train = np.append(x_train[:,0,:], x_train[:,1,:], axis=1) 
-	x_test = np.append(x_test[:,0,:], x_test[:,1,:], axis=1) 
-	autoencoder.fit(x_train, x_train, nb_epoch = 20, batch_size = n_train, shuffle = True, validation_data = (x_test, x_test), callbacks = [keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')])
+	input_dim = Input(shape=((img_rows+1)*2, ))
+	encoding_dim = img_rows*2
+	encoded = Dense(encoding_dim, activation='relu')(input_dim)
+	decoded = Dense((img_rows+1)*2, activation='sigmoid')(encoded)
+	autoencoder = Model(input=input_dim, output=decoded)
+	autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+	x_train = np.append(x_train[:, 0, :], x_train[:, 1, :], axis=1)
+	x_test = np.append(x_test[:, 0, :], x_test[:, 1, :], axis=1)
+	autoencoder.fit(x_train, x_train, nb_epoch=20, batch_size=n_train, shuffle=True, validation_data=(x_test, x_test), callbacks=[keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')])
 	auto_acc_list = []
 	x_train_auto = x_train
 	for feat_idx in range(img_rows+1):
 		x_train = x_train_auto
-        	x_train = x_train.transpose()
-    		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx])), axis=0)
-    		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
-    		new_x_train = np.append(x_train[:feat_idx+img_rows+1], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx+img_rows+1])), axis=0)
-    		x_train = np.append(new_x_train, x_train[feat_idx+1+img_rows+1:], axis=0)
-        	x_train = x_train.transpose()
+		x_train = x_train.transpose()
+		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx])), axis=0)
+		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
+		new_x_train = np.append(x_train[:feat_idx+img_rows+1], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx+img_rows+1])), axis=0)
+		x_train = np.append(new_x_train, x_train[feat_idx+1+img_rows+1:], axis=0)
+		x_train = x_train.transpose()
 		x_train_encoded = autoencoder.predict(x_train)
 		auto_cost = x_train_encoded - x_train_auto
 		auto_cost = auto_cost ** 2
@@ -150,15 +156,15 @@ for img_rows in range(127, 0, -1):
 	for final_index in range(len(idx_acc_list)):
 		relevance_val = idx_acc_list[final_index][1]
 		redundance_val = auto_acc_list[final_index][1]
-		final_value = relevance_val + redundance_val
+		final_value = relevance_val + redundance_val / R3_value
 		final_list.append((idx_acc_list[final_index][0], final_value))
 	final_list.sort(key=lambda x: x[1])
-        x_train_orig = x_train_orig.transpose((2,1,0))
+	x_train_orig = x_train_orig.transpose((2, 1, 0))
 	for worst_idx in range(1):
 		feat_idx_list.append(final_list[worst_idx][0])
-    		new_x_train_orig = np.append(x_train_orig[:feat_idx_list[-1]], np.full((1, x_train_orig.shape[1], x_train_orig.shape[2]), np.mean(x_train_orig[feat_idx_list[-1]])), axis=0)
-    		x_train_orig = np.append(new_x_train_orig, x_train_orig[feat_idx_list[-1]+1:], axis=0)
-        x_train_orig = x_train_orig.transpose((2,1,0))
+		new_x_train_orig = np.append(x_train_orig[:feat_idx_list[-1]], np.full((1, x_train_orig.shape[1], x_train_orig.shape[2]), np.mean(x_train_orig[feat_idx_list[-1]])), axis=0)
+		x_train_orig = np.append(new_x_train_orig, x_train_orig[feat_idx_list[-1]+1:], axis=0)
+		x_train_orig = x_train_orig.transpose((2, 1, 0))
 
 	remain_idx = list(set(list(range(128))) - set(feat_idx_list))
 	np.save('features/amber_' + str(img_rows) + '.npy', remain_idx)
@@ -168,18 +174,18 @@ for img_rows in range(127, 0, -1):
 
 	# final model Resnet Architecture
 	def residual_stack(x):
-		def residual_unit(y,_strides=1):
-    			shortcut_unit=y
-    			# 1x1 conv linear
-    			y = layers.Conv1D(32, kernel_size=5,data_format='channels_first',strides=_strides,padding='same',activation='relu')(y)
-    			y = layers.BatchNormalization()(y)
-    			y = layers.Conv1D(32, kernel_size=5,data_format='channels_first',strides=_strides,padding='same',activation='linear')(y)
-    			y = layers.BatchNormalization()(y)
-    			# add batch normalization
-    			y = layers.add([shortcut_unit,y])
-    			return y
-  
-		x = layers.Conv1D(32, data_format='channels_first',kernel_size=1, padding='same',activation='linear')(x)
+		def residual_unit(y, _strides=1):
+			shortcut_unit = y
+			# 1x1 conv linear
+			y = layers.Conv1D(32, kernel_size=5, data_format='channels_first', strides=_strides, padding='same', activation='relu')(y)
+			y = layers.BatchNormalization()(y)
+			y = layers.Conv1D(32, kernel_size=5, data_format='channels_first', strides=_strides, padding='same', activation='linear')(y)
+			y = layers.BatchNormalization()(y)
+			# add batch normalization
+			y = layers.add([shortcut_unit, y])
+			return y
+
+		x = layers.Conv1D(32, data_format='channels_first', kernel_size=1, padding='same', activation='linear')(x)
 		x = layers.BatchNormalization()(x)
 		x = residual_unit(x)
 		x = residual_unit(x)
@@ -187,7 +193,7 @@ for img_rows in range(127, 0, -1):
 		x = layers.MaxPooling1D(data_format='channels_first')(x)
 		return x
 
-	inputs=layers.Input(shape=list(x_train.shape[1:]))
+	inputs = layers.Input(shape=list(x_train.shape[1:]))
 	x = residual_stack(inputs)
 	x = residual_stack(x)
 	#x = residual_stack(x)    # Comment this when the input dimensions are 1/32 or lower
@@ -198,7 +204,7 @@ for img_rows in range(127, 0, -1):
 	x = AlphaDropout(0.1)(x)
 	x = Dense(128,kernel_initializer="he_normal", activation="selu", name="dense2")(x)
 	x = AlphaDropout(0.1)(x)
-	x = Dense(len(classes),kernel_initializer="he_normal", activation="softmax", name="dense3")(x)
+	x = Dense(len(classes), kernel_initializer="he_normal", activation="softmax", name="dense3")(x)
 	x_out = Reshape([len(classes)])(x)
 	model = models.Model(inputs=[inputs], output=[x_out])
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
@@ -214,13 +220,13 @@ for img_rows in range(127, 0, -1):
 	filepath = 'models/weights_resnet.wts.h5'
 	model = multi_gpu_model(model, gpus=3)
 	model.compile(loss=keras.losses.categorical_crossentropy,
-              optimizer=keras.optimizers.Adam(lr=0.001),
-              metrics=['accuracy'])
+								optimizer=keras.optimizers.Adam(lr=0.001),
+								metrics=['accuracy'])
 	history = model.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epoch, verbose=2, validation_split=0.2,
-        callbacks = [
-        	keras.callbacks.ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=True, mode='auto'),
-        	keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
-        ])
+											callbacks=[
+												keras.callbacks.ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=True, mode='auto'),
+												keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
+											])
 	# we re-load the best weights once training is finished
 	model.load_weights(filepath)
 
@@ -231,29 +237,29 @@ for img_rows in range(127, 0, -1):
 	print(score)
 
 	# In[12]:
-	# Print acciracies for each snr
+	# Print accuracies for each snr
 	acc = {}
 	for snr in snrs:
 		# extract classes @ SNR
 		test_SNRs = map(lambda x: lbl[x][1], test_idx)
-		test_X_i = x_test[np.where(np.array(test_SNRs)==snr)]
-		test_Y_i = y_test[np.where(np.array(test_SNRs)==snr)]    
+		test_X_i = x_test[np.where(np.array(test_SNRs) == snr)]
+		test_Y_i = y_test[np.where(np.array(test_SNRs) == snr)]
 
 	# estimate classes
 	test_Y_i_hat = model.predict(test_X_i)
-	conf = np.zeros([len(classes),len(classes)])
-	confnorm = np.zeros([len(classes),len(classes)])
-	for i in range(0,test_X_i.shape[0]):
-		j = list(test_Y_i[i,:]).index(1)
-		k = int(np.argmax(test_Y_i_hat[i,:]))
-		conf[j,k] = conf[j,k] + 1
-	for i in range(0,len(classes)):
-		confnorm[i,:] = conf[i,:] / np.sum(conf[i,:])
+	conf = np.zeros([len(classes), len(classes)])
+	confnorm = np.zeros([len(classes), len(classes)])
+	for i in range(0, test_X_i.shape[0]):
+		j = list(test_Y_i[i, :]).index(1)
+		k = int(np.argmax(test_Y_i_hat[i, :]))
+		conf[j, k] = conf[j, k] + 1
+	for i in range(0, len(classes)):
+		confnorm[i, :] = conf[i, :] / np.sum(conf[i, :])
 	#plt.figure()
 	#plot_confusion_matrix(confnorm, labels=classes, title="ConvNet Confusion Matrix (SNR=%d)"%(snr))
 	cor = np.sum(np.diag(conf))
 	ncor = np.sum(conf) - cor
-	print cor*100 / (cor+ncor)
+	print(cor*100 / (cor+ncor))
 	acc[snr] = 1.0*cor/(cor+ncor)
 	if snr == 18:
 		acc_list.append(cor*100 / (cor+ncor))

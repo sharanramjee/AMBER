@@ -69,6 +69,7 @@ y_test_orig = y_test
 ranker_model = load_model('models/cnn_mnist.h5')
 
 # perform AMBER
+R3_value = 1
 x_train_final = x_train
 x_test_final = x_test
 feat_idx_list = []
@@ -84,10 +85,10 @@ for img_rows in range(783, 0, -1):
 		x_train = x_train_orig
 		x_train = x_train.transpose()
 		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx])), axis=0)
-        	x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)		
+		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
 		x_train = x_train.transpose()
 		x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-		disc_score = ranker_model.evaluate(x_train, y_train, batch_size=n_train,verbose=0)
+		disc_score = ranker_model.evaluate(x_train, y_train, batch_size=10000, verbose=0)
 		idx_acc_list.append((feat_idx, disc_score[0]))
 		print(feat_idx)
 	idx_acc_list.sort(key=lambda x: x[0])
@@ -105,20 +106,20 @@ for img_rows in range(783, 0, -1):
 	x_test = x_test[remain_idx]
 	x_train = x_train.transpose()
 	x_test = x_test.transpose()
-	input_dim = Input(shape = (img_rows+1, ))
-        encoding_dim = img_rows
-	encoded = Dense(encoding_dim, activation = 'relu')(input_dim)
-	decoded = Dense(img_rows+1, activation = 'sigmoid')(encoded)
-	autoencoder = Model(input = input_dim, output = decoded)
-	autoencoder.compile(optimizer = 'adadelta', loss = 'binary_crossentropy')
-	autoencoder.fit(x_train, x_train, nb_epoch = 20, batch_size = n_train, shuffle = True, validation_data = (x_test, x_test), callbacks = [keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')])
+	input_dim = Input(shape=(img_rows+1, ))
+	encoding_dim = img_rows
+	encoded = Dense(encoding_dim, activation='relu')(input_dim)
+	decoded = Dense(img_rows+1, activation='sigmoid')(encoded)
+	autoencoder = Model(input=input_dim, output=decoded)
+	autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+	autoencoder.fit(x_train, x_train, nb_epoch=20, batch_size=10000, shuffle=True, validation_data=(x_test, x_test), callbacks=[keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')])
 	auto_acc_list = []
 	x_train_auto = x_train
 	for feat_idx in range(img_rows+1):
 		x_train = x_train_auto
 		x_train = x_train.transpose()
 		new_x_train = np.append(x_train[:feat_idx], np.full((1, x_train.shape[1]), np.mean(x_train[feat_idx])), axis=0)
-        	x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
+		x_train = np.append(new_x_train, x_train[feat_idx+1:], axis=0)
 		x_train = x_train.transpose()
 		x_train_encoded = autoencoder.predict(x_train)
 		auto_cost = x_train_encoded - x_train_auto
@@ -137,18 +138,18 @@ for img_rows in range(783, 0, -1):
 	for final_index in range(len(idx_acc_list)):
 		relevance_val = idx_acc_list[final_index][1]
 		redundance_val = auto_acc_list[final_index][1]
-		final_value = relevance_val + redundance_val
+		final_value = relevance_val + redundance_val / R3_value
 		final_list.append((idx_acc_list[final_index][0], final_value))
 	final_list.sort(key=lambda x: x[1])
 	x_train_orig = x_train_orig.transpose()
 	for worst_idx in range(1):
 		feat_idx_list.append(final_list[worst_idx][0])
 		new_x_train_orig = np.append(x_train_orig[:feat_idx_list[-1]], np.full((1, x_train_orig.shape[1]), np.mean(x_train_orig[feat_idx_list[-1]])), axis=0)
-        	x_train_orig = np.append(new_x_train_orig, x_train_orig[feat_idx_list[-1]+1:], axis=0)	
+		x_train_orig = np.append(new_x_train_orig, x_train_orig[feat_idx_list[-1]+1:], axis=0)
 	x_train_orig = x_train_orig.transpose()
 
 	remain_idx = list(set(list(range(784))) - set(feat_idx_list))
-	if img_rows%7 == 0:
+	if img_rows % 7 == 0:
 		np.save('features/amber_' + str(img_rows) + '.npy', remain_idx)
 
 	x_train = x_train_orig[:, remain_idx]
