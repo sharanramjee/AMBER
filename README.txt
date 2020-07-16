@@ -2,6 +2,7 @@ autoencoder_diagram.png: Illustration of the Autoencoder architecture
 overfitting_demo_data.xlsx: Data corresponding to the toy experiment of Section 5.2 explaining that overfitting is useful for feature selection
 dataset_links.txt: Text file containing links to download the 4 datasets
 library_list.txt: List of all used External Libraries
+hyperparameters.txt: List of all hyperparameters with file/code locations for the Ranker Models and Final Models
 
 
 Source Code Files (Source Code Folder):
@@ -33,6 +34,12 @@ radioml_cmim.pp: Source code for using Conditional Mutual Information Maximizati
 radioml_rfs.py: Source code for using Robust Feature Extraction with the RadioML2016.10b Dataset
 radioml_fqi.py: Source code for using Feature Quality Index with the RadioML2016.10b Dataset
 radioml_amber.py: Source code for using AMBER with the RadioML2016.10b Dataset
+
+(Ranker Models Sub-Folder)
+mnist_ranker.py: Ranker Model code for the MNIST dataset
+reuters_ranker.py: Ranker Model code for the Reuters dataset
+cancer_ranker.py: Ranker Model code for the Cancer dataset
+radioml_ranker.py: Ranker Model code for the RadioML dataset
 
 The model subfolder in each of these folders contain the state-of-the-art ranker model used by AMBER.
 The features subfolder in each of these folders are the destinations where the selected features are saved after running the codes so that they can be used in the future.
